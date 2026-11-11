@@ -543,6 +543,10 @@ footer img{height:64px;border-radius:8px}
   </div>
 </footer>
 
+<div style="background:#070708;border-top:1px solid #26262c;text-align:center;padding:11px 10px">
+  <a href="acceso-privado-ibarra.html" style="color:#71717a;font-size:.72rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;text-decoration:none">Acceso Ibarra</a>
+</div>
+
 <a class="wa-float" href="https://wa.me/523326261161?text=Hola%2C%20quiero%20cotizar%20una%20refacci%C3%B3n%20para%20mi%20tractocami%C3%B3n." target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
 
 <script>
@@ -574,6 +578,59 @@ document.getElementById('form-cot').addEventListener('submit', function(ev){
   var msg = 'Hola, soy ' + nombre + '. Busco esta refacción: ' + pieza + '.' + (notas ? ' Detalles: ' + notas : '') + ' ¿Me cotizas precio y disponibilidad?';
   window.open('https://wa.me/523326261161?text=' + encodeURIComponent(msg), '_blank');
 });
+</script>
+<script>
+// Contenido editable (panel del dueño): si el API responde con contenido válido,
+// el catálogo y el eslogan se actualizan solos; si no, la página queda tal cual.
+(function(){
+  try {
+    if (typeof fetch !== 'function') return;
+    fetch('https://ibarra-api.berroteranc64.workers.dev/api/content', { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(c){
+        if (!c || !Array.isArray(c.productos) || !c.productos.length) return;
+        var grid = document.getElementById('grid');
+        if (!grid) return;
+        if (c.eslogan) {
+          var sub = document.querySelector('.hero p.sub');
+          if (sub) sub.textContent = c.eslogan;
+        }
+        grid.innerHTML = '';
+        c.productos.forEach(function(p, i){
+          var art = document.createElement('article');
+          art.className = 'card ' + (i % 2 ? 'rv-r' : 'rv-l');
+          art.setAttribute('data-nombre', String(p.nombre || '').toLowerCase());
+          var foto = document.createElement('div'); foto.className = 'card-foto';
+          var img = document.createElement('img');
+          img.src = p.imagen || ''; img.alt = (p.nombre || '') + ' Kenworth'; img.loading = 'lazy';
+          foto.appendChild(img);
+          var banda = document.createElement('div'); banda.className = 'card-banda';
+          banda.textContent = p.nombre || '';
+          var cuerpo = document.createElement('div'); cuerpo.className = 'card-cuerpo';
+          String(p.descripcion || '').split('\n').forEach(function(linea){
+            if (!linea.trim()) return;
+            var par = document.createElement('p'); par.textContent = linea;
+            cuerpo.appendChild(par);
+          });
+          var a = document.createElement('a');
+          a.className = 'btn-cotizar'; a.target = '_blank'; a.rel = 'noopener';
+          a.href = 'https://wa.me/523326261161?text=' + encodeURIComponent('Hola, me interesa esta refacción Kenworth: ' + (p.nombre || '') + '. ¿Me cotizas precio y disponibilidad?');
+          a.textContent = 'Cotizar por WhatsApp';
+          cuerpo.appendChild(a);
+          art.appendChild(foto); art.appendChild(banda); art.appendChild(cuerpo);
+          grid.appendChild(art);
+        });
+        grid.querySelectorAll('.rv-l,.rv-r').forEach(function(el){
+          if (typeof io !== 'undefined' && io) io.observe(el); else el.classList.add('in');
+        });
+        if (typeof filtrar === 'function') {
+          cards = Array.prototype.slice.call(document.querySelectorAll('#grid .card'));
+          filtrar();
+        }
+      })
+      .catch(function(){ /* sin respuesta del panel: se queda el catálogo estático */ });
+  } catch (e) { /* la página estática no se toca */ }
+})();
 </script>
 </body>
 </html>
